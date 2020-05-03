@@ -2,21 +2,18 @@ const fs = require('fs');
 
 const gunzip = require('gunzip-file')
 
-console.log(process.env.APPDATA)
-
-const logDirectory = "C:/Users/ludvi/AppData/Roaming/.minecraft/logs/";
+const logDirectory = `${process.env.APPDATA}/.minecraft/logs/`;
 
 function extractChat(fileDirectory, fileName, outputDirectory, callback, options = { tempDirectory: "temp" }) {
-    const outputFileName =  fileName.replaceAll(".gz");
+    const outputFileName = fileName.replaceAll(".gz");
     const tempLog = options.tempDirectory + "/" + outputFileName;
 
     gunzip(fileDirectory + "/" + fileName, tempLog, () => {
         //Read the log
-        fs.readFile(tempLog, 'binary', (err, content) => { 
+        fs.readFile(tempLog, 'binary', (err, content) => {
             if (!content) return;
 
-            const chat = extractChatLines(content); 
-
+            const chat = extractChatLines(content);
             if (!chat) return;
 
             fs.writeFile(outputDirectory + outputFileName, chat, () => {
@@ -24,11 +21,16 @@ function extractChat(fileDirectory, fileName, outputDirectory, callback, options
 
                 if (callback) callback(chat);
             });
-        }); 
+        });
     });
 }
 
-function extractAllChat(logDirectory, outputDirectory, callback, options = { tempDirectory: "temp" }) {
+function extractAllChat(logDirectory, outputDirectory, callback) {
+
+    // Create the output and temp folders if they dont exist
+    if (!fs.existsSync("./temp")) fs.mkdirSync("./temp"); 
+    if (!fs.existsSync(outputDirectory)) fs.mkdirSync(outputDirectory);
+
     let filesDone = 0;
 
     getAllFiles(logDirectory, files => {
@@ -65,11 +67,10 @@ function getAllFiles(directory, callback) {
     })
 }
 
-String.prototype.replaceAll = function(str1, str2 = "") {
+String.prototype.replaceAll = function (str1, str2 = "") {
     return this.split(str1).join(str2);
-} 
+}
 
 extractAllChat(logDirectory, "output", () => {
-    console.log("Complete");
+    console.log("Completed");
 });
-//extractChat(logDirectory, "2019-09-14-2.log.gz", "output/");
